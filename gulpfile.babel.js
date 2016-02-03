@@ -9,9 +9,11 @@ import browserify from 'browserify';
 import source from 'vinyl-source-stream';
 import buffer from 'vinyl-buffer';
 import assign from 'lodash.assign';
+import sourcemaps from 'gulp-sourcemaps';
+import gutil from 'gulp-util';
 
 const customOpts = {
-  entries: ['./src/index.js'],
+  entries: ['./scripts/main.js'],
   debug: true
 };
 const opts = assign({}, watchify.args, customOpts);
@@ -39,13 +41,15 @@ gulp.task('livereload', () => {
 });
 
 function bundle() {
-  return watchify(browserify(opts)).bundle()
-    //.on('error', gutil.log.bind(gutil, 'Browserify Error'))
-    .pipe(source('bundle.js'))
+  return watchify(browserify(opts)
+      .transform('babelify', {presets: ['es2015']}))
+    .bundle()
+    .on('error', gutil.log.bind(gutil, 'Browserify Error'))
+    .pipe(source('main.js'))
     .pipe(buffer())
     .pipe(sourcemaps.init({loadMaps:true}))
     .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest('./dist'));
+    .pipe(gulp.dest('dist'));
 }
 
 function notifyLiveReload(event) {
